@@ -1,6 +1,6 @@
 #!/bin/bash
 
-nc -l -p 60 | while read -r output interface
+nc -l -p 71 | while read -r output interface
 do
 	if [[ $output == "GetDate" ]]
 	then
