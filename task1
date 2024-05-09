@@ -39,4 +39,4 @@ success
 Enforcing
 [root@oraclelinuxlab ~]# bash listen-on-port-71
 
-
+#скрипт запускается и исполняется, в логах /var/log/audit/audit.log про него нет ничего
