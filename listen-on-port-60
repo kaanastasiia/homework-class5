@@ -1,0 +1,37 @@
+#!/bin/bash
+
+nc -l -p 60 | while read -r output interface
+do
+	if [[ $output == "GetDate" ]]
+	then
+		echo $output
+		result=`date '+%Y-%m-%d %H:%M:%S'`
+		echo $result
+		logger "nc output: `date '+%Y-%m-%d %H:%M:%S'` $output $result"
+	elif [[ $output == "GetEpoch" ]]
+	then
+		echo $output
+                result=`date +%s`
+		echo $result
+		logger "nc ouptut: `date '+%Y-%m-%d %H:%M:%S'` $output $result"
+	elif [[ $output == "GetInetStats" && -n $interface ]]
+	then
+		echo $output $interface
+		result=`netstat -i | grep $interface`
+		echo $result
+		logger "nc output: `date '+%Y-%m-%d %H:%M:%S'` $output $interface $result"
+        elif [[ $output == "GetInetStats" ]]
+        then
+                echo $output
+                result=`netstat -i`
+		echo $result
+		logger "nc output: `date '+%Y-%m-%d %H:%M:%S'` $output $result"
+	elif [[ $output == "bye" ]]
+	then
+		echo $output
+		result="bye!"
+		echo $result
+		logger "nc output: `date '+%Y-%m-%d %H:%M:%S'` $output $result"
+		exit 0
+	fi
+done
