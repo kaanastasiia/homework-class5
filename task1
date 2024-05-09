@@ -1,0 +1,42 @@
+[root@oraclelinuxlab ~]# sestatus 
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   enforcing
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Memory protection checking:     actual (secure)
+Max kernel policy version:      33
+
+[root@oraclelinuxlab ~]# setenforce 0
+[root@oraclelinuxlab ~]# getenforce 
+Permissive
+[root@oraclelinuxlab ~]# sestatus
+SELinux status:                 enabled
+SELinuxfs mount:                /sys/fs/selinux
+SELinux root directory:         /etc/selinux
+Loaded policy name:             targeted
+Current mode:                   permissive
+Mode from config file:          enforcing
+Policy MLS status:              enabled
+Policy deny_unknown status:     allowed
+Memory protection checking:     actual (secure)
+Max kernel policy version:      33
+
+[root@oraclelinuxlab ~]# firewall-cmd --permanent --add-port=71/tcp
+success
+[root@oraclelinuxlab ~]# systemctl restart firewalld.service
+
+[root@oraclelinuxlab ~]# semanage port -l | grep 71
+[root@oraclelinuxlab ~]# semanage port -l | grep 71
+
+[root@oraclelinuxlab ~]# bash listen-on-port-71
+
+[root@oraclelinuxlab ~]# setenforce 1
+[root@oraclelinuxlab ~]# getenforce
+Enforcing
+[root@oraclelinuxlab ~]# bash listen-on-port-71
+
+
