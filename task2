@@ -1,0 +1,78 @@
+[root@oraclelinuxlab ~]# systemctl status nginx.service 
+● nginx.service - The nginx HTTP and reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: disab>
+    Drop-In: /usr/lib/systemd/system/nginx.service.d
+             └─php-fpm.conf
+     Active: active (running) since Mon 2024-05-13 21:09:22 MSK; 3s ago
+    Process: 4177 ExecStartPre=/usr/bin/rm -f /run/nginx.pid (code=exited, status=0>
+    Process: 4178 ExecStartPre=/usr/sbin/nginx -t (code=exited, status=0/SUCCESS)
+    Process: 4181 ExecStart=/usr/sbin/nginx (code=exited, status=0/SUCCESS)
+   Main PID: 4182 (nginx)
+      Tasks: 3 (limit: 21640)
+     Memory: 4.2M
+        CPU: 42ms
+     CGroup: /system.slice/nginx.service
+             ├─4182 "nginx: master process /usr/sbin/nginx"
+             ├─4183 "nginx: worker process"
+             └─4184 "nginx: worker process"
+
+May 13 21:09:22 oraclelinuxlab systemd[1]: Starting The nginx HTTP and reverse prox>
+May 13 21:09:22 oraclelinuxlab nginx[4178]: nginx: the configuration file /etc/ngin>
+May 13 21:09:22 oraclelinuxlab nginx[4178]: nginx: configuration file /etc/nginx/ng>
+May 13 21:09:22 oraclelinuxlab systemd[1]: Started The nginx HTTP and reverse proxy>
+
+[root@oraclelinuxlab ~]# mkdir /pubHtml
+[root@oraclelinuxlab html]# cp /usr/share/nginx/html/index.html /pubHtml/
+[root@oraclelinuxlab ~]# grep root /etc/nginx/nginx.conf
+        root         /usr/share/nginx/html;
+[root@oraclelinuxlab ~]# vim /etc/nginx/nginx.conf
+[root@oraclelinuxlab ~]# grep root /etc/nginx/nginx.conf
+        root         /pubHtml;
+[root@oraclelinuxlab ~]# systemctl reload nginx.service
+[root@oraclelinuxlab ~]# curl localhost 80
+<html>
+<head><title>403 Forbidden</title></head>
+<body>
+<center><h1>403 Forbidden</h1></center>
+<hr><center>nginx/1.20.1</center>
+</body>
+</html>
+[root@oraclelinuxlab files]# semanage fcontext -a -t httpd_sys_content_t "/pubHtml(/.*)?"
+[root@oraclelinuxlab files]# restorecon -rv /pubHtml/index.html 
+Relabeled /pubHtml/index.html from unconfined_u:object_r:default_t:s0 to unconfined_u:object_r:httpd_sys_content_t:s0
+[root@oraclelinuxlab files]# ls -lZ /pubHtml/
+total 8
+-rw-r--r--. 1 root root unconfined_u:object_r:httpd_sys_content_t:s0 4395 May 13 21:11 index.html
+[root@oraclelinuxlab files]# ls -lZ / | grep pub
+drwxr-xr-x.   2 root root system_u:object_r:httpd_sys_content_t:s0     24 May 13 21:11 pubHtml
+[root@oraclelinuxlab files]# curl localhost
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
+
+[root@oraclelinuxlab ~]# grep listen /etc/nginx/nginx.conf
+        listen       80;
+        listen       [::]:80;
+[root@oraclelinuxlab ~]# grep listen /etc/nginx/nginx.conf
+        listen       5665;
+        listen       [::]:5665;
+[root@oraclelinuxlab ~]# systemctl restart nginx.service 
+Job for nginx.service failed because the control process exited with error code.
+See "systemctl status nginx.service" and "journalctl -xeu nginx.service" for details.
+[root@oraclelinuxlab ~]# semanage port -l | grep -w 80
+http_port_t                    tcp      80, 81, 443, 488, 8008, 8009, 8443, 9000
+[root@oraclelinuxlab ~]# semanage port -a -t http_port_t -p tcp 5665
+[root@oraclelinuxlab ~]# fire
+firefox               firewalld             
+firewall-cmd          firewall-offline-cmd  
+[root@oraclelinuxlab ~]# firewall-cmd --permanent --add-port=5665/tcp
+success
+[root@oraclelinuxlab ~]# systemctl restart firewalld.service 
+[root@oraclelinuxlab ~]# semanage port -l | grep -w 80
+http_port_t                    tcp      5665, 80, 81, 443, 488, 8008, 8009, 8443, 9000
+[root@oraclelinuxlab ~]# systemctl restart nginx.service 
+[root@oraclelinuxlab ~]# systemctl status nginx.service 
+● nginx.service - The nginx HTTP and reverse proxy server
+     Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: disab
+[root@oraclelinuxlab ~]# curl localhost:5665
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+
