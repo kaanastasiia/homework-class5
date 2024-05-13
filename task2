@@ -1,3 +1,6 @@
+#задание выполнялось на OracleLinux9, развернутой в Virtual Box
+
+#проверяем, что nginx запущен
 [root@oraclelinuxlab ~]# systemctl status nginx.service 
 ● nginx.service - The nginx HTTP and reverse proxy server
      Loaded: loaded (/usr/lib/systemd/system/nginx.service; disabled; preset: disab>
@@ -21,10 +24,13 @@ May 13 21:09:22 oraclelinuxlab nginx[4178]: nginx: the configuration file /etc/n
 May 13 21:09:22 oraclelinuxlab nginx[4178]: nginx: configuration file /etc/nginx/ng>
 May 13 21:09:22 oraclelinuxlab systemd[1]: Started The nginx HTTP and reverse proxy>
 
+#создаем директорию /pubHtml и копируем в нее действующий index.html
 [root@oraclelinuxlab ~]# mkdir /pubHtml
 [root@oraclelinuxlab html]# cp /usr/share/nginx/html/index.html /pubHtml/
 [root@oraclelinuxlab ~]# grep root /etc/nginx/nginx.conf
         root         /usr/share/nginx/html;
+
+#меняем root-директорию и проверяем доступ
 [root@oraclelinuxlab ~]# vim /etc/nginx/nginx.conf
 [root@oraclelinuxlab ~]# grep root /etc/nginx/nginx.conf
         root         /pubHtml;
@@ -37,6 +43,8 @@ May 13 21:09:22 oraclelinuxlab systemd[1]: Started The nginx HTTP and reverse pr
 <hr><center>nginx/1.20.1</center>
 </body>
 </html>
+
+#меняем контекст директории, чтобы nginx смог получить к ней доступ и проверяем, что все работает
 [root@oraclelinuxlab files]# semanage fcontext -a -t httpd_sys_content_t "/pubHtml(/.*)?"
 [root@oraclelinuxlab files]# restorecon -rv /pubHtml/index.html 
 Relabeled /pubHtml/index.html from unconfined_u:object_r:default_t:s0 to unconfined_u:object_r:httpd_sys_content_t:s0
@@ -48,16 +56,19 @@ drwxr-xr-x.   2 root root system_u:object_r:httpd_sys_content_t:s0     24 May 13
 [root@oraclelinuxlab files]# curl localhost
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 
-
+#меняем порт, на котором слушает nginx
 [root@oraclelinuxlab ~]# grep listen /etc/nginx/nginx.conf
         listen       80;
         listen       [::]:80;
+[root@oraclelinuxlab ~]# vim /etc/nginx/nginx.conf
 [root@oraclelinuxlab ~]# grep listen /etc/nginx/nginx.conf
         listen       5665;
         listen       [::]:5665;
 [root@oraclelinuxlab ~]# systemctl restart nginx.service 
 Job for nginx.service failed because the control process exited with error code.
 See "systemctl status nginx.service" and "journalctl -xeu nginx.service" for details.
+
+#проверяем, какой контекст имеет 80 порт, на котором nginx слушал без проблем и добавляем данные контекст к новому порту, так же открываем его в firewalld
 [root@oraclelinuxlab ~]# semanage port -l | grep -w 80
 http_port_t                    tcp      80, 81, 443, 488, 8008, 8009, 8443, 9000
 [root@oraclelinuxlab ~]# semanage port -a -t http_port_t -p tcp 5665
@@ -69,6 +80,8 @@ success
 [root@oraclelinuxlab ~]# systemctl restart firewalld.service 
 [root@oraclelinuxlab ~]# semanage port -l | grep -w 80
 http_port_t                    tcp      5665, 80, 81, 443, 488, 8008, 8009, 8443, 9000
+
+#рестартуем nginx и убеждаемся, что все заработало
 [root@oraclelinuxlab ~]# systemctl restart nginx.service 
 [root@oraclelinuxlab ~]# systemctl status nginx.service 
 ● nginx.service - The nginx HTTP and reverse proxy server
